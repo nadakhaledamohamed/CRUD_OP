@@ -24,18 +24,14 @@ namespace CRUD_OP.Controllers
             var employees = _context.Employees.Where(e => (string.IsNullOrEmpty(searchString) == true || e.Name.Contains(searchString.Trim())
                                            || e.PhoneNumber.Contains(searchString.Trim()))).Include(x => x.Department).OrderBy(x => x.Name).ToList();
 
-            return View(new EmployeeViewModel
+            return View(new RenderPages<Employee>
             {
-                CurrentPage = currentPage,
-                Employees = employees,
-                pageSize = 5,
+                Data = employees,
+                PageNumber = currentPage,
+                PageSize = 5,
                 TotalPages = (int)Math.Ceiling((double)employees.Count() / 5),
             });
         }
-
-
-
-
         public IActionResult Create()
         {
             ViewBag.Departments = _context.Departments.OrderBy(x => x.DepartmentName).ToList();

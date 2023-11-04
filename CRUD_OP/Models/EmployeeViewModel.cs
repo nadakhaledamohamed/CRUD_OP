@@ -1,14 +1,13 @@
 ﻿namespace CRUD_OP.Models
 
 {
-    public class EmployeeViewModel
+    public class RenderPages<T> where T : class
     {
 
-        public List<Employee>? Employees { get; set; }
-        public int CurrentPage { get; set; }
+        public List<T>? Data { get; set; }
+        public int PageNumber { get; set; }
         public int TotalPages { get; set; }
-        public int pageSize { get; set; }
-        public string? Term { get; set; }
-        public string? OrderBy { get; set; }
+        public int PageSize { get; set; }
+
     }
 }
