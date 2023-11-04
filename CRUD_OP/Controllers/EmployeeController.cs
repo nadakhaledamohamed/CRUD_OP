@@ -4,6 +4,7 @@ using CRUD_OP.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Drawing.Printing;
 //using Microsoft.IdentityModel.Tokens;
 
 //using System.Drawing.Printing;
@@ -18,36 +19,21 @@ namespace CRUD_OP.Controllers
         {
             _context = context;
         }
-        public IActionResult Index(string searchString,string term = "", string orderBy = " ", int currentPage = 1)
+        public IActionResult Index(string searchString, int currentPage = 1)
         {
+            var employees = _context.Employees.Where(e => (string.IsNullOrEmpty(searchString) == true || e.Name.Contains(searchString.Trim())
+                                           || e.PhoneNumber.Contains(searchString.Trim()))).Include(x => x.Department).OrderBy(x => x.Name).ToList();
 
-
-            var employees = _context.Employees.Include(x => x.Department).OrderBy(x => x.Name).ToList();
-            var empData = new EmployeeViewModel();
-            if (!string.IsNullOrEmpty(searchString))
+            return View(new EmployeeViewModel
             {
-                searchString = searchString.Trim().Replace(" ", "").ToLower();
-                employees = employees.Where(e => e.Name.Replace(" ", "").ToLower().Contains(searchString)
-                                             || e.PhoneNumber.Replace(" ", "").ToLower().Contains(searchString)).ToList();
-            }
-
-            //employees = employees.Where(e=> e.Name.Contains(searchString)
-            int totalRecords = employees.Count();
-            int pageSize = 5;
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-            var Eemployees = employees.Skip((currentPage - 1) * pageSize).Take(pageSize);
-            //current page=1 , skip =(1-1=0)*5 =1 take=page size which is 5
-            //current page = 2 ,skip=(2-1)*5 = 5  take =5 record 
-            empData.Employees= Eemployees.ToList();
-            empData.CurrentPage = currentPage;
-            empData.TotalPages = totalPages;
-            empData.Term = term;
-            empData.pageSize = pageSize;
-            empData.OrderBy = orderBy;
-            return View(empData);
+                CurrentPage = currentPage,
+                Employees = employees,
+                pageSize = 5,
+                TotalPages = (int)Math.Ceiling((double)employees.Count() / 5),
+            });
         }
 
-    
+
 
 
         public IActionResult Create()
@@ -58,40 +44,26 @@ namespace CRUD_OP.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Employee employee)
+        public IActionResult Create(Employee model)
         {
             if (ModelState.IsValid)
             {
-                try
+                var employee = _context.Employees.FirstOrDefault(e => e.Name.Equals(model.Name));
+                if (employee is null)
                 {
-                    _context.Employees.Add(employee);
+                    _context.Employees.Add(model);
                     _context.SaveChanges();
                     return RedirectToAction(nameof(Index));
-                
-                }
-             catch (DbUpdateException ex)
-                {
-                if (ex.InnerException != null && ex.InnerException is SqlException sqlEx &&
-                    (sqlEx.Number == 2627 || sqlEx.Number == 547))
-                {
-                    ModelState.AddModelError("", "The provided Name or Phone Number already exists in the database.");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "An error occurred while saving your data. Please try again.");
                 }
             }
+            ViewBag.Departments = _context.Departments.OrderBy(d => d.DepartmentName).ToList();
+            ModelState.AddModelError("", "The provided Name or Phone Number already exists in the database.");
+            return View(model);
         }
 
-        ViewBag.Departments = _context.Departments.OrderBy(d => d.DepartmentName).ToList();
-            return View(employee);
-    }
-
-
-
-    public IActionResult Edit(int id)
+        public IActionResult Edit(int id)
         {
-            ViewBag.Departments = _context.Departments.OrderBy(d => d.DepartmentName).ToList(); //ViewBag.Departments: ViewBag is a dynamic property of the controller base class that you can use to pass data from the controller to the view.
+            ViewBag.Departments = _context.Departments.OrderBy(d => d.DepartmentName).ToList();
             var Emp = _context.Employees.Find(id);
 
             return View("Create", Emp);

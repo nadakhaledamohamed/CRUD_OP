@@ -1,8 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CRUD_OP.Models
 {
+    [Index(nameof(PhoneNumber), IsUnique = true)]
+    [Index(nameof(Name), IsUnique = true)]
     public class Employee
     {
         [Key]
